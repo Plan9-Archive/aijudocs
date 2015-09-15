@@ -24,6 +24,9 @@ To avoid blowing this fuse, do not operate aijuboard with a power supply capable
 Do not operate aijuboard on a conductive surface.
 .IP \(bu
 Do not place jumpers in any position not specifically mentioned in this manual.
+.IP \(bu
+The heatsink is glued to the system-on-chip.
+Do not try to remove the heatsink and take care never to apply too much force to it, even accidentally.
 .NH
 Quick start guide
 .PP
