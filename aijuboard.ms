@@ -32,7 +32,7 @@ Quick start guide
 Verify that both the TX and RX jumpers on P3 are in place.
 Verify that the boot jumper on P1 is set to `ROM' and not `JTAG'.
 .IP \n+i.
-Insert an SD card with a bootable image; alternatively, connect Ethernet and set up another Plan 9 computer to DHCP boot (the default MAC address is
+Insert an SD card with a bootable image; alternatively, connect Ethernet and set up another Plan 9 computer to DHCP boot, using the the zynq kernel (the default MAC address is
 .CW 0ea7deadbeef ).
 .IP \n+i.
 Connect the USB-B connector to a host.
@@ -41,7 +41,7 @@ Linux and 9front should work out of the box, you may need to install FT2232H dri
 Connect the board to the power supply.
 The `power' LED should turn on.
 .IP \n+i.
-Open a terminal program on the host.
+Open a terminal program on the host set to 115200 baud 8N1.
 You want to use the
 .I second
 serial port provided by the FT2232H, e.g. on 9front run
@@ -95,3 +95,15 @@ The 64\ KB sector size limits its applicability.
 .IP \(bu
 an SD card slot.
 None of the UHS modes are supported and the maximum speed is hence 25\ MB/s.
+.NH
+The CPU-FPGA interface
+.PP
+The CPU can program the FPGA using the internal configuration access port (ICAP).
+In 9front this is achieved by simply copying the bitstream into 
+.CW /dev/pl .
+To get a suitable bitstream you need to set Vivado to generate a
+.CW .bin
+file and then reverse the byte order, which is achieved most simply by piping it through the 9front command
+.P1
+audio/pcmconv -i u32r1c1 -o U32r1c1
+.P2
