@@ -1,7 +1,10 @@
 #!/bin/rc
+echo 'set_property BITSTREAM.GENERAL.COMPRESS TRUE [current_design]
+set_property BITSTREAM.CONFIG.UNUSEDPIN PULLUP [current_design]
+create_clock -name FCLK -period 10.000 [get_pins {PS7_i/FCLKCLK[0]}]'
 sed 's/\#.*//g
 /^[ 	]*$/d' $1 | sort | join -a1 /fd/0 /fd/3 <<[3]END | awk ' { if(NF == 2)
-print "unknown pin", $1 > "/fd/2"; else printf("set_property IOSTANDARD %s"
+print "unknown pin", $1 > "/fd/2"; else printf("set_property IOSTANDARD %s " \
 "[get_ports {%s}]\nset_property PACKAGE_PIN %s [get_ports {%s}]\n", $4, $2, $3, $2); } ' 
 CLK	T2	LVCMOS33
 GP0	C6	LVCMOS33
@@ -40,8 +43,8 @@ LED0	C5	LVCMOS33
 LED1	C3	LVCMOS33
 LED2	B2	LVCMOS33
 LED3	B1	LVCMOS33
-LED4	A2	LVCMOS33
-LED5	B3	LVCMOS33
+LED4	B3	LVCMOS33
+LED5	A2	LVCMOS33
 LSOUND	A4	LVCMOS33
 RSOUND	B4	LVCMOS33
 SCL	A6	LVCMOS33

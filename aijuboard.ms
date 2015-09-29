@@ -5,7 +5,7 @@ Julius Schmidt
 .NH
 Taking care of your board
 .PP
-There is a few things that you should beware of as they may cause serious damage to the board.
+There are a few things that you should beware of as they may cause serious damage to the board.
 .IP \(bu
 Like all circuit boards aijuboard is sensitive to electrostatic discharge (ESD).
 While circuit boards are generally less sensitive than individual chips, you probably should not touch aijuboard directly after stroking your cat.
@@ -98,6 +98,126 @@ The 64\ KB sector size limits its applicability.
 .IP \(bu
 an SD card slot.
 None of the UHS modes are supported and the maximum speed is hence 25\ MB/s.
+.NH
+Introduction to using the FPGA
+.PP
+This section is meant to be a `tutorial' that describes how to take a simple design from Verilog to running it on the FPGA.
+First of all you will, of course, need a design to run.
+As a first example we will use the program 
+.CW blink.v
+reproduced below that shows a single light `rotating' around the LEDs.
+.PP
+First of all, line 1 disables implicit declaration of wires, a very annoying Verilog `feature' that is well worth turning off.
+Now, to do anything non-trivial you will need a clock from somewhere.
+The Zynq has a clock generator on the chip.
+To access it, you need to instantiate the
+.CW PS7
+module, done here in l.\ 19\(en21.
+Note the use of a 
+.CW DONT_TOUCH
+attribute to prevent Vivado from optimizing
+.CW PS7
+away which it sometimes does.
+The four clocks are supplied as a four bit vector; since we only care about the first one we define an alias
+.CW clk
+in l.\ 6.
+By default this clock is set to 100\ MHz.
+Accessing the LEDs is a bit more straightforward, for now just declare it as a port in l.\ 3.
+.PP
+The actual logic is l.\ 7\(en18.
+We use a 6 bit register to hold the current LED state (defined in l.\ 3) and a 32 bit counter to keep track of time.
+The counter is incremented until it reaches 49,999,999; after that it rolls over to zero.
+When the counter rolls over, the output register is rotated one bit to the left, using the 
+.CW {}
+operator for bit concatenation, in l.\ 16.
+.P1
+.eo
+.nm 1
+.so blink.v
+.nm
+.ec
+.P2
+.PP
+You also need a constraints file that defines various `implementation details', most importantly what pins correspond to which Verilog ports.
+Since this file is rather tedious to maintain, a script is provided in the appendix that autogenerates it as follows.
+.P1
+.eo
+$ aijupins11 > blink.xdc
+.so blink.pins
+.ec
+\fIEOF
+.P2
+.PP
+The first column defines the hardware signal name (see the script for a list) and the name of the corresponding Verilog port.
+.PP
+To build this system we now need to use Vivado.
+Vivado has two basic modes called project mode and non-project mode.
+In project mode Vivado maintains a `project' on disk that contains all the metadata about your program.
+In non project mode projects are created only temporarily in RAM; each build creates a new project.
+The main advantage of project mode is that, when used with the GUI, it leads to a workflow similar to IDEs such as Visual Studio or Eclipse.
+Which is why we are not going to use it.
+With a scripted workflow non-project mode is more pleasant to use as it leaves around fewer pointless files on disk.
+It's also faster because it keeps things in RAM.
+And it uses less RAM, too (please don't ask me how that makes sense).
+.PP
+A basic script for Vivado's non-project mode is shown below.
+It closes any open projects and creates a new `project' in RAM for the part we are using.
+It reads in our Verilog file and constraints file (\\ lets you split one command over multiple lines, used here so you can expand the script by adding lines for all files in your project).
+It then synthesizes, places and routes the design, creating `checkpoints' named
+.CW *.dcp
+as it goes through these steps.
+These checkpoints are useful if you want to examine the output of the synthesis tool, which can be useful for debugging.
+It writes a timing summary and utilization report into
+.CW *.rpt
+files.
+You will probably get awfully familiar with these reports once you start doing more advanced designs, but for now don't worry too much.
+Line 21\(en23 prints out a warning if timing fails which means you don't have to check the timing summary every time to compile to find out whether your design would actually work.
+The script also converts the design into a bitstream that can be loaded into an FPGA using the
+.CW write_bitstream
+command.
+.PP
+You can run scripts either from the command line by simply doing
+.P1
+vivado -mode batch -source build.tcl
+.P2
+or you can alternatively run them in the GUI by typing 
+.CW "source build.tcl"
+in the TCL console.
+Running them in the GUI has the benefit that the design remains open for you to examine (F4 is a particularly useful key that brings up the schematic view).
+.PP
+The
+.CW write_bitstream
+command creates output in a format the FPGA actually likes.
+It creates both a 
+.CW .bit
+and a 
+.CW .bin
+file, the former is the format used by Xilinx tools, whereas the latter is the `flat binary' format that gets loaded into the FPGA.
+Except that for some reason it is in the wrong endianness.
+We can abuse
+.I pcmconv (1)
+to convert it into the proper format as follows
+.P1
+audio/pcmconv -i u32r1c1 -o U32r1c1 <build/out.bin >/whatever/out.bin
+.P2
+The byte swapped
+.CW out.bin
+file thus generated can now be loaded into the 
+.CW /dev/pl
+device and the LEDs should now be `rotating'.
+You can ignore the warning
+.P1
+temperature sensor reads 0, shouldn't happen
+.P2
+that may get printed on the console, it's a kernel bug that will be fixed eventually.
+.P1
+.eo
+.nm 1
+.so build.tcl
+.nm
+.ec
+.P2
+
 .NH
 The CPU-FPGA interface
 .PP
