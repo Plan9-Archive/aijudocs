@@ -388,10 +388,17 @@ r l l l.
 7	GPIORESET	Out	Available at P7 (see Jumper Settings)
 .TE
 .SH
+Acknowledgements
+.PP
+Many thanks to all the people who contributed to the aijuboard Indiegogo campaign and the people who bought the board.
+A special thanks to Ian Sutton (kremlin), rlevi and spew.
+And of course a special thanks to cinap_lenrek who wrote a large amount of the kernel code.
+.SH
 Appendix: Script to map signal names to FPGA pins
 .PP
 .P1
 .eo
+.nf
 .so aijupins11
 .ec
 .P2
